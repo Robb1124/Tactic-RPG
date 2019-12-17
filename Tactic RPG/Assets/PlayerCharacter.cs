@@ -25,7 +25,7 @@ public class PlayerCharacter : Actor
                 if (Physics.Raycast(ray, out hit, 100, 1 << 8))  //On store l'information du ray dans le hit. max distance de 100 metres. 
                                                                  //On ignore TOUS LES LAYERS sauf le layer Tile comme ca on peut raycast au travers des players et obstacles. 
                 {
-                    if (hit.collider.GetComponent<Tile>()) //Si on hit un tile
+                    if ((hit.collider.GetComponent<BaseTile>() && hit.collider.GetComponent<BaseTile>().TopTile is null) || hit.collider.GetComponent<HeightTile>().TopTile) //Si on hit un tile
                     {
                         if(clickedTile != null)
                             clickedTile.target = false;

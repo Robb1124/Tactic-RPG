@@ -6,10 +6,10 @@ public class TileManager : MonoBehaviour
 {
     [SerializeField] int width;
     [SerializeField] int height;
-    [SerializeField] Tile[,] tiles;
+    [SerializeField] BaseTile[,] tiles;
     BattleManager battleManager;
 
-    public Tile[,] Tiles { get => tiles; set => tiles = value; }
+    public BaseTile[,] Tiles { get => tiles; set => tiles = value; }
     public int Width { get => width; set => width = value; }
     public int Height { get => height; set => height = value; }
     public int DistanceGoal { get => distanceGoal; set => distanceGoal = value; }
@@ -19,7 +19,7 @@ public class TileManager : MonoBehaviour
     void Start()
     {
         battleManager = FindObjectOfType<BattleManager>();
-        Tiles = new Tile[Width, Height];
+        Tiles = new BaseTile[Width, Height];
         FeedTiles();
 
     }
@@ -41,10 +41,11 @@ public class TileManager : MonoBehaviour
                 {
                     if (collider.gameObject.tag == "Tile")
                     {
-                        Tiles[i, j] = collider.gameObject.GetComponent<Tile>();
+                        Tiles[i, j] = collider.gameObject.GetComponent<BaseTile>();
                         //tiles[i, j].GetComponent<Renderer>().material.color = Color.red; //Line qui servait a debugger et voir les tiles faisant partie du grid selon le width and height.
                         Tiles[i, j].SetTileIndex(new TileIndex(i, j));
                         Tiles[i, j].CheckIfCharacterOnTile(); //Raycast a savoir si un Actor est present sur le tile, si oui, la tile est occupied et on register la position dans le Actor script.
+                        Tiles[i, j].CalculateTilesHeight(); //raycast a savoir combien de tiles sont sur la base tile, pour connaitre la hauteur du monde.
                         break;
                     }
                 }
@@ -56,7 +57,7 @@ public class TileManager : MonoBehaviour
 
     public void ComputeAdjencyList(float jumpOrAttackHeight, bool forAttack)
     {       
-        foreach (Tile tile in Tiles)
+        foreach (BaseTile tile in Tiles)
         {
             tile.FindNeighbors(jumpOrAttackHeight, forAttack);
         }

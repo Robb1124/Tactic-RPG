@@ -14,8 +14,8 @@ public class Actor : MonoBehaviour
     [SerializeField] int attackDamage = 10;
     [SerializeField] int maxHp = 30;
     int currentHp;
-    Tile currentTile;
-    Tile targetTile;
+    BaseTile currentTile;
+    BaseTile targetTile;
     protected Tile clickedTile;
     protected bool canChooseWhereToMove = false;
     protected bool canChooseWhereToAttack = false;
@@ -23,8 +23,8 @@ public class Actor : MonoBehaviour
     protected bool isMoving = false;
     public TileIndex CharacterTileIndex { get => characterTileIndex; set => characterTileIndex = value; }
     TileManager tileManager;
-    List<Tile> selectableTiles = new List<Tile>();
-    Stack<Tile> path = new Stack<Tile>();
+    List<BaseTile> selectableTiles = new List<BaseTile>();
+    Stack<BaseTile> path = new Stack<BaseTile>();
     BattleManager battleManager;
     Animator animator;
 
@@ -51,20 +51,21 @@ public class Actor : MonoBehaviour
 
     public void DisplayMoveRange()
     {
-        tileManager.ComputeAdjencyList(attackHeight, false); //Toutes les tiles prennent conscience de leurs neighbors
-        Queue<Tile> process = new Queue<Tile>(); //On cree une file dans lequel on va mettre les tiles a process. Une file = First in first out.
+        tileManager.ComputeAdjencyList(jumpHeight, false); //Toutes les tiles prennent conscience de leurs neighbors
+        Queue<BaseTile> process = new Queue<BaseTile>(); //On cree une file dans lequel on va mettre les tiles a process. Une file = First in first out.
         currentTile = tileManager.Tiles[characterTileIndex.X, characterTileIndex.Z]; //On prend la tile du character pour savoir a partir de ou on bouge
         currentTile.current = true; //On notify la tile que cest la current tile (pour l'instant sert a colorer differement la tile sous le personnage qui va bouger
         process.Enqueue(currentTile); //On met notre tile dans la process queue
         currentTile.visited = true; //On indique que cette tile est visite pour pas qu'on la process 2 fois
         while (process.Count > 0) //Tant que la queue n'est pas vide, on continue a process
         {
-            Tile t = process.Dequeue(); //On enleve le premier de la queue en en gardant une reference
-            selectableTiles.Add(t); //On ajoute cette tile dans notre liste de tile selectable (pour qu'on puisse la cliquer plus tard pour bouger)
+            BaseTile t = process.Dequeue(); //On enleve le premier de la queue en en gardant une reference
+            selectableTiles.Add(t); //On ajoute cette tile dans notre liste de tile selectable (pour qu'on puisse la cliquer plus tard pour bouger)                       
             t.selectable = true; //On indique que la tile est selectable pour qu'elle change de couleur
+            
             if (t.distance < moveRange) //On s'assure de respecter notre move range (distance est defaulted a 0, donc la premier tile processed a 0 de distance
             {
-                foreach (Tile tile in t.adjacencyList) //on passe tous les neighbors de la tile, parce que si il nous reste du move range, on peut aller sur tous ses neighbors
+                foreach (BaseTile tile in t.adjacencyList) //on passe tous les neighbors de la tile, parce que si il nous reste du move range, on peut aller sur tous ses neighbors
                 {
                     if (!tile.visited) //On ne veut pas process 2 fois la meme tile, donc on skip les visited.
                     {
@@ -82,20 +83,20 @@ public class Actor : MonoBehaviour
 
     public void DisplayAttackRange()
     {
-        tileManager.ComputeAdjencyList(jumpHeight, true); //Toutes les tiles prennent conscience de leurs neighbors
-        Queue<Tile> process = new Queue<Tile>(); //On cree une file dans lequel on va mettre les tiles a process. Une file = First in first out.
+        tileManager.ComputeAdjencyList(attackHeight, true); //Toutes les tiles prennent conscience de leurs neighbors
+        Queue<BaseTile> process = new Queue<BaseTile>(); //On cree une file dans lequel on va mettre les tiles a process. Une file = First in first out.
         currentTile = tileManager.Tiles[characterTileIndex.X, characterTileIndex.Z]; //On prend la tile du character pour savoir a partir de ou on attaque
         currentTile.current = true; //On notify la tile que cest la current tile (pour l'instant sert a colorer differement la tile sous le personnage qui va attaquer)
         process.Enqueue(currentTile); //On met notre tile dans la process queue
         currentTile.visited = true; //On indique que cette tile est visite pour pas qu'on la process 2 fois
         while (process.Count > 0) //Tant que la queue n'est pas vide, on continue a process
         {
-            Tile t = process.Dequeue(); //On enleve le premier de la queue en en gardant une reference
+            BaseTile t = process.Dequeue(); //On enleve le premier de la queue en en gardant une reference
             selectableTiles.Add(t); //On ajoute cette tile dans notre liste de tile selectable (pour qu'on puisse la cliquer plus tard pour attaquer)
             t.attackSelectable = true; //On indique que la tile est selectable pour une attaque (on la color red)
             if (t.distance < attackRange) //On s'assure de respecter notre attack range (distance est defaulted a 0, donc la premier tile processed a 0 de distance)
             {
-                foreach (Tile tile in t.adjacencyList) //on passe tous les neighbors de la tile, parce que si il nous reste du attack range, on peut aller sur tous ses neighbors
+                foreach (BaseTile tile in t.adjacencyList) //on passe tous les neighbors de la tile, parce que si il nous reste du attack range, on peut aller sur tous ses neighbors
                 {
                     if (!tile.visited) //On ne veut pas process 2 fois la meme tile, donc on skip les visited.
                     {
@@ -114,10 +115,24 @@ public class Actor : MonoBehaviour
     public void RecreatePathToTargetTile(Tile tile)
     {
         path.Clear();
-        tile.target = true;      
-
-        Tile next = tile;
-        while(next != null) // quand next est null cest qu'on est arriver au starting tile.
+        if(tile is HeightTile)
+        {
+            ((HeightTile)tile).BaseTile.target = true;
+        }
+        else
+        {
+            tile.target = true;
+        }
+        BaseTile next;
+        if (tile is BaseTile)
+        {
+            next = (BaseTile)tile;
+        }
+        else
+        {
+            next = ((HeightTile)tile).BaseTile;
+        }
+        while (next != null) // quand next est null cest qu'on est arriver au starting tile.
         {
             path.Push(next); //on met la next tile dans la stack, first in last out, pour creer le chemin que le personnage va prendre jusqu'a la target tile.
             next = next.parent;
@@ -137,12 +152,12 @@ public class Actor : MonoBehaviour
 
         if (path.Count > 0) //si ya des tiles dans notre pathing, on bouge.
         {
-            Tile t = t = path.Peek();
-            Vector3 target = t.transform.position;
-            target.y += 0.5f; //Pour rester au niveau du plancher.
+            BaseTile t = t = path.Peek();
+            Vector3 target = new Vector3(t.transform.position.x, t.transform.position.y + (0.5f * t.TilesOnTop), t.transform.position.z); //on compute le height pour que le personnage se dirige se les tiles du dessus et non la base tile.
+            target.y += 0.25f; //Pour rester au niveau du plancher.
             
             if(Vector3.Distance(transform.position, target) >= 0.38f)
-            {
+            {                
                 if(path.Count == 1)
                 {
                     GetComponent<AICharacterControl>().SetTarget(target, () => transform.position = target); //Quand cest la derniere tile a move to, on envoie une ligne de code a executer quand la target est reached.
@@ -176,7 +191,7 @@ public class Actor : MonoBehaviour
             currentTile = null;
         }
         StartCoroutine(ResetClickedTileAfterDelay()); //Pour que notre selection soit afficher un peu plus longtemps
-        foreach (Tile tile in selectableTiles)
+        foreach (BaseTile tile in selectableTiles)
         {
             tile.Reset();           
         }
@@ -186,15 +201,30 @@ public class Actor : MonoBehaviour
 
     IEnumerator ResetClickedTileAfterDelay()
     {
-        yield return new WaitForSecondsRealtime(1.5f);
-        clickedTile.target = false;
+        yield return new WaitForSecondsRealtime(1f);
+        if(clickedTile is BaseTile)
+        {
+            clickedTile.target = false;
+        }
+        else
+        {
+            ((HeightTile)clickedTile).BaseTile.target = false;
+
+        }
     }
 
     protected void AttackTile(Tile targetTile)
     {
         RemoveSelectableTiles(); //fait juste reseter le choix de tile pour changer les couleurs et qu'on puisse pas spam click
-        this.targetTile = targetTile; 
-        targetTile.target = true;
+        if(targetTile is HeightTile)
+        {
+            this.targetTile = ((HeightTile)targetTile).BaseTile;
+            ((HeightTile)targetTile).BaseTile.target = true;
+        }
+        else
+        {
+            this.targetTile = (BaseTile)targetTile;
+        }        
         transform.LookAt(targetTile.transform.position);
         animator.SetTrigger("Attack");
     }
