@@ -413,23 +413,23 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 
+      m_SelectedIDs: 8a370000
       m_LastClickedID: 0
-      m_ExpandedIDs: 78fbffff
+      m_ExpandedIDs: 124fffff8459ffff78fbffff0c37000058390000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
-        m_Name: 
-        m_OriginalName: 
+        m_Name: Cancel
+        m_OriginalName: Cancel
         m_EditFieldRect:
           serializedVersion: 2
           x: 0
           y: 0
           width: 0
           height: 0
-        m_UserData: 0
+        m_UserData: -38930
         m_IsWaitingForDelay: 0
         m_IsRenaming: 0
-        m_OriginalEventType: 11
+        m_OriginalEventType: 4
         m_IsRenamingFilename: 0
         m_ClientGUIView: {fileID: 8}
       m_SearchString: 
@@ -467,7 +467,7 @@ MonoBehaviour:
   m_ViewDataDictionary: {fileID: 0}
   m_ShowContextualTools: 0
   m_WindowGUID: acb47569d9b55e74abfc4a899b616f27
-  m_Gizmos: 1
+  m_Gizmos: 0
   m_SceneIsLit: 1
   m_SceneLighting: 1
   m_2DMode: 0
@@ -475,9 +475,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: -1.9321761, y: 0.17135702, z: -1.362659}
+    m_Target: {x: -49.848335, y: -388.56366, z: 656.77637}
     speed: 2
-    m_Value: {x: -1.9321761, y: 0.17135702, z: -1.362659}
+    m_Value: {x: -49.848335, y: -388.56366, z: 656.77637}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -506,13 +506,13 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
   m_Rotation:
-    m_Target: {x: 0.23432066, y: -0.39948517, z: 0.10949397, w: 0.8795798}
+    m_Target: {x: 0.2626773, y: -0.036804114, z: 0.012728627, w: 0.9641809}
     speed: 2
-    m_Value: {x: 0.23430379, y: -0.3994564, z: 0.10948609, w: 0.8795165}
+    m_Value: {x: 0.2626562, y: -0.036801156, z: 0.012727604, w: 0.9641034}
   m_Size:
-    m_Target: 8.94605
+    m_Target: 775.88477
     speed: 2
-    m_Value: 8.94605
+    m_Value: 775.88477
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -528,11 +528,11 @@ MonoBehaviour:
     m_FieldOfView: 90
     m_NearClip: 0.03
     m_FarClip: 10000
-    m_DynamicClip: 1
+    m_DynamicClip: 0
     m_OcclusionCulling: 0
   m_ShowGlobalGrid: 1
-  m_LastSceneViewRotation: {x: -0.009793287, y: 0.042417444, z: 0.0031118193, w: 0.99904716}
-  m_LastSceneViewOrtho: 1
+  m_LastSceneViewRotation: {x: -0.109414995, y: -0.20994553, z: 0.020889018, w: -0.9714282}
+  m_LastSceneViewOrtho: 0
   m_ReplacementShader: {fileID: 0}
   m_ReplacementString: 
   m_SceneVisActive: 1
@@ -677,9 +677,9 @@ MonoBehaviour:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 0c2e0000
-    m_LastClickedID: 11788
-    m_ExpandedIDs: 00000000142e0000522e0000c22f0000ec300000783100009a320000d83300002c350000a6410000
+    m_SelectedIDs: 142e0000
+    m_LastClickedID: 11796
+    m_ExpandedIDs: 00000000142e0000522e0000c22f0000ec300000783100009a320000d83300002c350000a641000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -732,8 +732,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: 9c3b0000
-    m_LastClickedInstanceID: 15260
+    m_SelectedInstanceIDs: 5e53ffff
+    m_LastClickedInstanceID: -44194
     m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: c6230000000000002c3200004685ffff303100008c4000004232000046320000b42f00001c580000d4570000f4570000e2570000e22e0000ba4e0000522101002e410000225e03000c6e0300025e0300f65d0300fe5d0300165e03000e5e0300f45000004ca70000b0c70000400b02007a120100c61401000438060042f2050028f305001cf40500ecf30500f6f4050028df0700
     m_RenameOverlay:
@@ -935,7 +935,7 @@ MonoBehaviour:
   m_ViewDataDictionary: {fileID: 0}
   m_LockTracker:
     m_IsLocked: 0
-  m_LastSelectedObjectID: -101256
+  m_LastSelectedObjectID: 14218
 --- !u!114 &22
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -951,7 +951,7 @@ MonoBehaviour:
   m_MinSize: {x: 275, y: 50}
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
-    m_Text: Inspector
+    m_Text: Debug
     m_Image: {fileID: -6905738622615590433, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BaseTile : Tile
 {
-    [SerializeField] float tilesOnTop;
+    [SerializeField] int tilesOnTop;
     HeightTile topTile;
     public bool walkable = true;
     public bool usedByCharacter = false;
@@ -25,7 +25,7 @@ public class BaseTile : Tile
     float lowestTileReachableFromThisTile;
 
     public Actor CharacterOnTile { get => characterOnTile; set => characterOnTile = value; }
-    public float TilesOnTop { get => tilesOnTop; set => tilesOnTop = value; }
+    public int TilesOnTop { get => tilesOnTop; set => tilesOnTop = value; }
     public HeightTile TopTile { get => topTile; set => topTile = value; }
 
     public void SetTileIndex(TileIndex index)
@@ -62,7 +62,7 @@ public class BaseTile : Tile
     public void CheckIfCharacterOnTile()
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.up, out hit, 20)) //Raycasts vers le haut pour savoir si ya un collider
+        if (Physics.Raycast(transform.position, Vector3.up, out hit, 20, 1 << 9)) //Raycasts vers le haut pour savoir si ya un collider
         {
             if (hit.collider.GetComponent<Actor>())
             {

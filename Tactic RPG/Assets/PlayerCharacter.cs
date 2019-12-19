@@ -34,7 +34,6 @@ public class PlayerCharacter : Actor
                         {
                             if (canChooseWhereToMove)
                             {
-                                //move to its position.
                                 canChooseWhereToMove = false;
                                 RecreatePathToTargetTile(clickedTile);
                             }

@@ -10,7 +10,7 @@ public class TileManager : MonoBehaviour
     BattleManager battleManager;
 
     public BaseTile[,] Tiles { get => tiles; set => tiles = value; }
-    public int Width { get => width; set => width = value; }
+    public int Width { get => width; set => width = value; } //on doit specifier le width and height de notre map pour que le manager les recense bien
     public int Height { get => height; set => height = value; }
     public int DistanceGoal { get => distanceGoal; set => distanceGoal = value; }
 
@@ -36,7 +36,7 @@ public class TileManager : MonoBehaviour
         {
             for (int j = 0; j < Height; j++)
             {
-                Collider[] colliders = Physics.OverlapSphere(new Vector3((0.5f - Width / 2) + i, 0, (-0.5f + Height / 2) - j), 0.2f);
+                Collider[] colliders = Physics.OverlapSphere(new Vector3((0.5f - Width / 2) + i, 0, (-0.5f + Height / 2) - j), 0.2f); //on fait un raycast en sphere aux positions ou il doit y avoir des tiles pour les recenser
                 foreach (var collider in colliders)
                 {
                     if (collider.gameObject.tag == "Tile")

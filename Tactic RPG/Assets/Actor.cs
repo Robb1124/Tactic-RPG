@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityStandardAssets.Characters.ThirdPerson;
+using UnityEngine.AI;
 
 public class Actor : MonoBehaviour
 {
@@ -19,6 +20,10 @@ public class Actor : MonoBehaviour
     protected Tile clickedTile;
     protected bool canChooseWhereToMove = false;
     protected bool canChooseWhereToAttack = false;
+
+    //for jumps
+    int lastTileHeight;
+    bool jumped = false;
 
     protected bool isMoving = false;
     public TileIndex CharacterTileIndex { get => characterTileIndex; set => characterTileIndex = value; }
@@ -78,7 +83,8 @@ public class Actor : MonoBehaviour
             }
         }
         currentTile.selectable = false;
-        canChooseWhereToMove = true;         
+        canChooseWhereToMove = true;
+        lastTileHeight = currentTile.TilesOnTop;
     }
 
     public void DisplayAttackRange()
@@ -114,24 +120,18 @@ public class Actor : MonoBehaviour
 
     public void RecreatePathToTargetTile(Tile tile)
     {
-        path.Clear();
-        if(tile is HeightTile)
+        path.Clear(); //on clear le stack path pour partir a neuf
+        BaseTile next;
+        if (tile is HeightTile) //si cest une height tile qu'on a clicked, on va referencer la base tile de cette tile (le systeme fonctionne a partir des base tile)
         {
             ((HeightTile)tile).BaseTile.target = true;
-        }
-        else
+            next = ((HeightTile)tile).BaseTile;
+        } 
+        else //sinon, on presuppose que cest une basetile est on reference la tile elle meme
         {
             tile.target = true;
-        }
-        BaseTile next;
-        if (tile is BaseTile)
-        {
             next = (BaseTile)tile;
-        }
-        else
-        {
-            next = ((HeightTile)tile).BaseTile;
-        }
+        }       
         while (next != null) // quand next est null cest qu'on est arriver au starting tile.
         {
             path.Push(next); //on met la next tile dans la stack, first in last out, pour creer le chemin que le personnage va prendre jusqu'a la target tile.
@@ -152,39 +152,52 @@ public class Actor : MonoBehaviour
 
         if (path.Count > 0) //si ya des tiles dans notre pathing, on bouge.
         {
-            BaseTile t = t = path.Peek();
+            BaseTile t = path.Peek();            
             Vector3 target = new Vector3(t.transform.position.x, t.transform.position.y + (0.5f * t.TilesOnTop), t.transform.position.z); //on compute le height pour que le personnage se dirige se les tiles du dessus et non la base tile.
             target.y += 0.25f; //Pour rester au niveau du plancher.
-            
-            if(Vector3.Distance(transform.position, target) >= 0.38f)
+            int heightDifference = t.TilesOnTop - lastTileHeight;
+            if (heightDifference > 1 || heightDifference < -1) //jump
+            {
+                GetComponent<AICharacterControl>().SetTarget(target);
+                GetComponent<NavMeshAgent>().Warp(target); //ca ca le teleporte sur la tile plus haute ou plus basse. mais ca serait ici qu'on ferait l'animation de jumping quand on voudra enlever le teleporting. (ou une animation de teleporting ex: mage)
+                jumped = true;                
+            }
+            if (Vector3.Distance(transform.position, target) >= 0.38f && !jumped)
             {                
                 if(path.Count == 1)
                 {
-                    GetComponent<AICharacterControl>().SetTarget(target, () => transform.position = target); //Quand cest la derniere tile a move to, on envoie une ligne de code a executer quand la target est reached.
-                    t.usedByCharacter = true;
-                    t.CharacterOnTile = this;
-                    characterTileIndex = t.index;
+                    GetComponent<AICharacterControl>().SetTarget(target, () => transform.position = target); //Quand cest la derniere tile a move to, on envoie une ligne de code a executer quand la target est reached.                    
                 }
                 else
                 {
                     GetComponent<AICharacterControl>().SetTarget(target); //on se dirige vers la tile sur le dessus de la pile
-                }
+                }                
             }
             else
             {
+                lastTileHeight = t.TilesOnTop;
+                if(path.Count == 1)
+                {
+                    t.usedByCharacter = true;
+                    t.CharacterOnTile = this;
+                    characterTileIndex = t.index;
+                }
                 path.Pop(); // une fois la tile sur le dessus de la pile atteinte, on l'enleve de la pile et on en prend une autre
+                jumped = false;
             }
         }
         else
         {
             isMoving = false;
-            battleManager.DoneWithMovement(); //termine la phase de mouvement du player
+            battleManager.DoneWithMovement = true; //termine la phase de mouvement du player
+            battleManager.RefreshButtonsAndManageTurn(); 
             resetTilesCalled = false;
         }
     }
 
-    protected void RemoveSelectableTiles()
+    public void RemoveSelectableTiles()
     {
+        battleManager.DisplayingRange = false;
         if(currentTile != null)
         {
             currentTile.current = false;
@@ -195,22 +208,23 @@ public class Actor : MonoBehaviour
         {
             tile.Reset();           
         }
-
         selectableTiles.Clear();
     }
 
     IEnumerator ResetClickedTileAfterDelay()
     {
         yield return new WaitForSecondsRealtime(1f);
-        if(clickedTile is BaseTile)
+        if(clickedTile != null)
         {
-            clickedTile.target = false;
-        }
-        else
-        {
-            ((HeightTile)clickedTile).BaseTile.target = false;
-
-        }
+            if (clickedTile is BaseTile)
+            {
+                clickedTile.target = false;
+            }
+            else
+            {
+                ((HeightTile)clickedTile).BaseTile.target = false;
+            }
+        }       
     }
 
     protected void AttackTile(Tile targetTile)
@@ -235,7 +249,8 @@ public class Actor : MonoBehaviour
         {
             targetTile.CharacterOnTile.TakeDamage(attackDamage);
         }
-        battleManager.DoneWithAttack();
+        battleManager.DoneWithAttack = true; //termine phase d'attack du character
+        battleManager.RefreshButtonsAndManageTurn();
     }
 
     public void TakeDamage(int dmgAmount)
@@ -244,6 +259,8 @@ public class Actor : MonoBehaviour
         print(currentHp);
         if(currentHp <= 0)
         {
+            tileManager.Tiles[characterTileIndex.X, characterTileIndex.Z].usedByCharacter = false; //quand on creve, la tile est pu used 
+
             Destroy(this.gameObject);
         }
     }
