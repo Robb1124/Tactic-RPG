@@ -10,7 +10,12 @@ public class Actor : MonoBehaviour
     [SerializeField] TileIndex characterTileIndex;
     [SerializeField] int moveRange = 3;
     [SerializeField] int jumpHeight = 1;
-    [SerializeField] int attackRange = 1;
+    [SerializeField] AimPattern aimPattern; //comment les tiles selectionnable sont choisi
+    [SerializeField] TargetPattern targetPattern; //Comment le spell fait effect (aoe, singletarget.. le pattern de aoe surtout)
+    List<Actor> currentTargets = new List<Actor>();
+    [SerializeField] int maxAttackRange = 1;
+    [SerializeField] int minAttackRange = 1;
+    [SerializeField] int attackSize = 1;
     [SerializeField] int attackHeight = 0;
     [SerializeField] int attackDamage = 10;
     [SerializeField] int maxHp = 30;
@@ -84,36 +89,62 @@ public class Actor : MonoBehaviour
         }
         currentTile.selectable = false;
         canChooseWhereToMove = true;
-        lastTileHeight = currentTile.TilesOnTop;
+        lastTileHeight = currentTile.TilesOnTop; //va servir quand on va bouger, savoir on est a quel height au depart
     }
 
     public void DisplayAttackRange()
     {
-        tileManager.ComputeAdjencyList(attackHeight, true); //Toutes les tiles prennent conscience de leurs neighbors
-        Queue<BaseTile> process = new Queue<BaseTile>(); //On cree une file dans lequel on va mettre les tiles a process. Une file = First in first out.
         currentTile = tileManager.Tiles[characterTileIndex.X, characterTileIndex.Z]; //On prend la tile du character pour savoir a partir de ou on attaque
         currentTile.current = true; //On notify la tile que cest la current tile (pour l'instant sert a colorer differement la tile sous le personnage qui va attaquer)
-        process.Enqueue(currentTile); //On met notre tile dans la process queue
-        currentTile.visited = true; //On indique que cette tile est visite pour pas qu'on la process 2 fois
-        while (process.Count > 0) //Tant que la queue n'est pas vide, on continue a process
+        tileManager.ComputeAdjencyList(attackHeight, true); //Toutes les tiles prennent conscience de leurs neighbors
+        switch (aimPattern)
         {
-            BaseTile t = process.Dequeue(); //On enleve le premier de la queue en en gardant une reference
-            selectableTiles.Add(t); //On ajoute cette tile dans notre liste de tile selectable (pour qu'on puisse la cliquer plus tard pour attaquer)
-            t.attackSelectable = true; //On indique que la tile est selectable pour une attaque (on la color red)
-            if (t.distance < attackRange) //On s'assure de respecter notre attack range (distance est defaulted a 0, donc la premier tile processed a 0 de distance)
-            {
-                foreach (BaseTile tile in t.adjacencyList) //on passe tous les neighbors de la tile, parce que si il nous reste du attack range, on peut aller sur tous ses neighbors
+            case AimPattern.Standard:
+                Queue<BaseTile> process = new Queue<BaseTile>(); //On cree une file dans lequel on va mettre les tiles a process. Une file = First in first out.
+                process.Enqueue(currentTile); //On met notre tile dans la process queue
+                currentTile.visited = true; //On indique que cette tile est visite pour pas qu'on la process 2 fois
+                while (process.Count > 0) //Tant que la queue n'est pas vide, on continue a process
                 {
-                    if (!tile.visited) //On ne veut pas process 2 fois la meme tile, donc on skip les visited.
+                    BaseTile t = process.Dequeue(); //On enleve le premier de la queue en en gardant une reference
+                    selectableTiles.Add(t); //On ajoute cette tile dans notre liste de tile selectable (pour qu'on puisse la cliquer plus tard pour attaquer)
+
+                    if (t.distance > minAttackRange - 1)
                     {
-                        //pas besoin du parent pour l'attaque, on veut juste savoir quel case on peut hit, pas le chemin pour s'y rendre.
-                        tile.visited = true;
-                        tile.distance = 1 + t.distance; //On assigne la distance a cette tile
-                        process.Enqueue(tile); //Toutes les tiles voisines de la tile qui se fait process vont devoir etre process par la suite si la distance le permet.
+                        t.attackSelectable = true; //On indique que la tile est selectable pour une attaque (on la color red)
+                    }
+                    if (t.distance < maxAttackRange) //On s'assure de respecter notre attack range (distance est defaulted a 0, donc la premier tile processed a 0 de distance)
+                    {
+                        foreach (BaseTile tile in t.adjacencyList) //on passe tous les neighbors de la tile, parce que si il nous reste du attack range, on peut aller sur tous ses neighbors
+                        {
+                            if (!tile.visited) //On ne veut pas process 2 fois la meme tile, donc on skip les visited.
+                            {
+                                //pas besoin du parent pour l'attaque, on veut juste savoir quel case on peut hit, pas le chemin pour s'y rendre.
+                                tile.visited = true;
+                                tile.distance = 1 + t.distance; //On assigne la distance a cette tile
+                                process.Enqueue(tile); //Toutes les tiles voisines de la tile qui se fait process vont devoir etre process par la suite si la distance le permet.
+                            }
+                        }
                     }
                 }
-            }
-        }
+                break;
+            case AimPattern.Around:
+                for (int i = -maxAttackRange; i <= maxAttackRange; i++)
+                {
+                    for (int j = -maxAttackRange; j <= maxAttackRange; j++)
+                    {
+                        if(Mathf.Abs(i) >= minAttackRange || Mathf.Abs(j) >= minAttackRange)
+                        {
+                            BaseTile t = tileManager.RequestTile(currentTile.index.X + i, currentTile.index.Z + j);
+                            if (t && Mathf.Abs(currentTile.TilesOnTop - t.TilesOnTop) <= attackHeight)
+                            {
+                                t.attackSelectable = true;
+                                selectableTiles.Add(t);
+                            }
+                        }                                               
+                    }
+                }
+                break;
+        }                     
         currentTile.attackSelectable = false;
         canChooseWhereToAttack = true;
     }
@@ -229,25 +260,43 @@ public class Actor : MonoBehaviour
 
     protected void AttackTile(Tile targetTile)
     {
-        RemoveSelectableTiles(); //fait juste reseter le choix de tile pour changer les couleurs et qu'on puisse pas spam click
-        if(targetTile is HeightTile)
+        currentTargets.Clear();
+        switch (targetPattern)
         {
-            this.targetTile = ((HeightTile)targetTile).BaseTile;
-            ((HeightTile)targetTile).BaseTile.target = true;
+            case TargetPattern.SingleTarget:
+                if (targetTile is HeightTile)
+                {
+                    this.targetTile = ((HeightTile)targetTile).BaseTile;
+                    ((HeightTile)targetTile).BaseTile.target = true;
+                }
+                else
+                {
+                    this.targetTile = (BaseTile)targetTile;
+                }
+                currentTargets.Add(this.targetTile.CharacterOnTile);
+                break;
+            case TargetPattern.AllTargetInAim:
+                foreach (BaseTile tile in selectableTiles)
+                {
+                    currentTargets.Add(tile.CharacterOnTile);
+                }
+                break;
         }
-        else
-        {
-            this.targetTile = (BaseTile)targetTile;
-        }        
+        RemoveSelectableTiles(); //fait juste reseter le choix de tile pour changer les couleurs et qu'on puisse pas spam click        
         transform.LookAt(targetTile.transform.position);
         animator.SetTrigger("Attack");
     }
 
     public void Hit() //le hit est un animation event qui est call quand l'attack animation semble faire impact.
     {
-        if (targetTile.CharacterOnTile)
+        for (int i = 0; i < currentTargets.Count; i++)
         {
-            targetTile.CharacterOnTile.TakeDamage(attackDamage);
+            if (currentTargets[i] != null && currentTargets[i] != this)
+            {
+                currentTargets[i].TakeDamage(attackDamage);
+                print(currentTargets[i].name);
+                print(attackDamage);
+            }
         }
         battleManager.DoneWithAttack = true; //termine phase d'attack du character
         battleManager.RefreshButtonsAndManageTurn();
@@ -256,11 +305,10 @@ public class Actor : MonoBehaviour
     public void TakeDamage(int dmgAmount)
     {       
         currentHp -= dmgAmount;
-        print(currentHp);
+        //print(currentHp);
         if(currentHp <= 0)
         {
             tileManager.Tiles[characterTileIndex.X, characterTileIndex.Z].usedByCharacter = false; //quand on creve, la tile est pu used 
-
             Destroy(this.gameObject);
         }
     }

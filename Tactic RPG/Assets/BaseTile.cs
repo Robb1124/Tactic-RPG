@@ -150,10 +150,10 @@ public class BaseTile : Tile
 
     }
 
-    public void CheckTile(Direction direction, float characterJumpHeight) //On regarde si ya une tile dans la direction demandee, si y'en a, on check si elle est walkable ou used par un character selon les besoins (attack ou mouvement)
+    public void CheckTile(Direction direction, float characterJumpOrAttackHeight) //On regarde si ya une tile dans la direction demandee, si y'en a, on check si elle est walkable ou used par un character selon les besoins (attack ou mouvement)
     {
-        highestTileReachableFromThisTile = TilesOnTop + characterJumpHeight;
-        lowestTileReachableFromThisTile = TilesOnTop - characterJumpHeight;
+        highestTileReachableFromThisTile = TilesOnTop + characterJumpOrAttackHeight;
+        lowestTileReachableFromThisTile = TilesOnTop - characterJumpOrAttackHeight;
         BaseTile tile;
         switch (direction)
         {
@@ -203,7 +203,7 @@ public class BaseTile : Tile
     {
         if (forAttack)
         {
-            return (tile); //pt qu'on veut pas que les case not walkable ou avec obstacles soit selectable, a voir.
+            return (tile && tile.TilesOnTop <= highestTileReachableFromThisTile && tile.tilesOnTop >= lowestTileReachableFromThisTile); //pt qu'on veut pas que les case not walkable ou avec obstacles soit selectable, a voir.
         }
         return (tile && tile.walkable && !tile.usedByCharacter && tile.TilesOnTop <= highestTileReachableFromThisTile && tile.tilesOnTop >= lowestTileReachableFromThisTile); //plus tard on pourra pt walk throught les coequipiers, ca sera a modifier
     }
