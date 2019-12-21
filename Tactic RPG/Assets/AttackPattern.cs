@@ -8,7 +8,8 @@ public enum TargetPattern
     AllTargetInAim,
     Cross,
     StraightLine,
-    DiagonalLine        
+    DiagonalLine,
+    StandardAoe
 }
 
 public enum AimPattern
@@ -17,6 +18,7 @@ public enum AimPattern
     Melee, //comme standard mais pas impacted par des stats de bonus range ?
     StraightLine,
     DiagonalLine,
-    Around, //carre autour du caster
+    AroundSky, //carre autour du caster
+    AroundGround,
     Global
 }

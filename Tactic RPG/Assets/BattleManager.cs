@@ -60,12 +60,16 @@ public class BattleManager : MonoBehaviour
 
     public void CancelAction() //si on affiche le range, on le desaffiche et on permet au joueur de changer d'idee
     {
+        activeCharacter.AttackIsCancelled = true;
+        activeCharacter.WaitingForTargetConfirmation = false;
+        activeCharacter.RemoveSelectableTiles();
+        DisplayingRange = false;
+        cancelButton.interactable = false;
+        RefreshButtonsAndManageTurn(); //quand on cancel, on refresh les boutons a savoir lesquels peuvent etre clicked (ex : si on a deja move on le reactive pas)
+
         if (DisplayingRange)
         {
-            activeCharacter.RemoveSelectableTiles(); //on enleve la selection de tiles
-            DisplayingRange = false;
-            RefreshButtonsAndManageTurn(); //quand on cancel, on refresh les boutons a savoir lesquels peuvent etre clicked (ex : si on a deja move on le reactive pas)
-            cancelButton.interactable = false;
+            activeCharacter.RemoveSelectableTiles(); //on enleve la selection de tiles                      
         }
     }
 
@@ -86,5 +90,10 @@ public class BattleManager : MonoBehaviour
         DoneWithAttack = false; //on reset ses actions avant de refresh les boutons
         doneWithMovement = false;
         RefreshButtonsAndManageTurn();
+    }
+
+    public void ConfirmTargets()
+    {
+        activeCharacter.WaitingForTargetConfirmation = false;
     }
 }
