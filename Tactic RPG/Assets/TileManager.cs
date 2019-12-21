@@ -63,4 +63,13 @@ public class TileManager : MonoBehaviour
         }
         
     }
+
+    public BaseTile RequestTile(int x, int z)
+    {
+        if((x >= 0 && x < width) && (z >= 0 && z < height))
+        {
+            return Tiles[x, z];
+        }
+        return null;
+    }
 }

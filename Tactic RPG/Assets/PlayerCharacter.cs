@@ -40,7 +40,14 @@ public class PlayerCharacter : Actor
                             else if (canChooseWhereToAttack)
                             {
                                 canChooseWhereToAttack = false;
-                                AttackTile(clickedTile);
+                                if(clickedTile is BaseTile)
+                                {
+                                    AttackTile((BaseTile)clickedTile);
+                                }
+                                else if(clickedTile is HeightTile)
+                                {
+                                    AttackTile(((HeightTile)clickedTile).BaseTile);
+                                }
                             }                            
                         }
                     }

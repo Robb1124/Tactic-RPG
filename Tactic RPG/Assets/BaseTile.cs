@@ -9,7 +9,7 @@ public class BaseTile : Tile
     public bool walkable = true;
     public bool usedByCharacter = false;
     public bool current = false;
-
+    public bool targetPreview = false;
     bool forAttack = false;
     public TileIndex index;
     public List<BaseTile> adjacencyList = new List<BaseTile>();
@@ -69,6 +69,7 @@ public class BaseTile : Tile
                 usedByCharacter = true; //La tile est occupied
                 characterOnTile = hit.collider.GetComponent<Actor>();
                 characterOnTile.CharacterTileIndex = index; //On enregistre la position du character dans le grid.
+                characterOnTile.CharacterTile = this;
             }
             else
             {
@@ -97,6 +98,10 @@ public class BaseTile : Tile
                 topTile.selectable = true;
             }
             color = Color.blue;
+        }
+        else if (targetPreview)
+        {            
+            color = Color.magenta;
         }
         else if (attackSelectable)
         {
@@ -137,6 +142,11 @@ public class BaseTile : Tile
         distance = 0;
     }
 
+    public void ResetTargetPreview()
+    {
+        targetPreview = false;
+    }
+
     public void FindNeighbors(float jumpHeight, bool forAttack = false) //Les tiles vont aller sonder les tiles voisines
     {
         this.forAttack = forAttack;
@@ -150,10 +160,10 @@ public class BaseTile : Tile
 
     }
 
-    public void CheckTile(Direction direction, float characterJumpHeight) //On regarde si ya une tile dans la direction demandee, si y'en a, on check si elle est walkable ou used par un character selon les besoins (attack ou mouvement)
+    public void CheckTile(Direction direction, float characterJumpOrAttackHeight) //On regarde si ya une tile dans la direction demandee, si y'en a, on check si elle est walkable ou used par un character selon les besoins (attack ou mouvement)
     {
-        highestTileReachableFromThisTile = TilesOnTop + characterJumpHeight;
-        lowestTileReachableFromThisTile = TilesOnTop - characterJumpHeight;
+        highestTileReachableFromThisTile = TilesOnTop + characterJumpOrAttackHeight;
+        lowestTileReachableFromThisTile = TilesOnTop - characterJumpOrAttackHeight;
         BaseTile tile;
         switch (direction)
         {
@@ -166,7 +176,7 @@ public class BaseTile : Tile
                     return;
                 break;
             case Direction.Up:
-                if (index.Z - 1 > 0)
+                if (index.Z - 1 >= 0)
                 {
                     tile = tiles[index.X, index.Z - 1] ? tiles[index.X, index.Z - 1] : null;
                 }
@@ -203,7 +213,7 @@ public class BaseTile : Tile
     {
         if (forAttack)
         {
-            return (tile); //pt qu'on veut pas que les case not walkable ou avec obstacles soit selectable, a voir.
+            return (tile && tile.TilesOnTop <= highestTileReachableFromThisTile && tile.tilesOnTop >= lowestTileReachableFromThisTile); //pt qu'on veut pas que les case not walkable ou avec obstacles soit selectable, a voir.
         }
         return (tile && tile.walkable && !tile.usedByCharacter && tile.TilesOnTop <= highestTileReachableFromThisTile && tile.tilesOnTop >= lowestTileReachableFromThisTile); //plus tard on pourra pt walk throught les coequipiers, ca sera a modifier
     }
