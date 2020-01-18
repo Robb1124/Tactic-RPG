@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public enum BattleState { PlayerChoose }
 public class BattleManager : MonoBehaviour
 {
+    public static BattleManager Instance = null;
     [SerializeField] Actor[] playerCharacters;
     Actor activeCharacter;
     [SerializeField] BattleState currentBattleState;
@@ -17,14 +18,17 @@ public class BattleManager : MonoBehaviour
     [SerializeField] Button moveButton;
     [SerializeField] Button attackButton;
     [SerializeField] Button cancelButton;
-
+    [SerializeField] ActionPanel actionPanel;
+    [SerializeField] GameObject actionDescriptionPanel;
     public bool DoneWithMovement { get => doneWithMovement; set => doneWithMovement = value; }
     public bool DoneWithAttack { get => doneWithAttack; set => doneWithAttack = value; }
     public bool DisplayingRange { get => displayingRange; set => displayingRange = value; }
+    public Actor ActiveCharacter { get => activeCharacter; set => activeCharacter = value; }
 
     // Start is called before the first frame update
     void Start()
     {
+        Instance = this;
         tileManager = FindObjectOfType<TileManager>();
     }
 
@@ -36,13 +40,13 @@ public class BattleManager : MonoBehaviour
 
     public void StartBattle() //caller une fois que le tilemanager a recenser toutes les bases tiles et que les bases tiles ont pris conscience des tiles au dessus d'elles, des characters etc.
     {
-        activeCharacter = playerCharacters[playerCharacterIndex]; //on commence par faire jouer le premier player pour l'instant. (defaulted a 0)
+        ActiveCharacter = playerCharacters[playerCharacterIndex]; //on commence par faire jouer le premier player pour l'instant. (defaulted a 0)
     }
 
 
     public void MoveAction() //methode called quand le bouton move est clicked (ca display le range, possible de cancel avec le cancel button)
     {
-        activeCharacter.DisplayMoveRange();
+        ActiveCharacter.DisplayMoveRange();
         attackButton.interactable = false; //on desactive les boutons sauf le cancel et le fait de pouvoir cliquer une tile
         moveButton.interactable = false;
         cancelButton.interactable = true;
@@ -51,7 +55,7 @@ public class BattleManager : MonoBehaviour
 
     public void AttackAction() //methode called quand le bouton attack est clicked (ca display le range, possible de cancel avec le cancel button)
     {
-        activeCharacter.DisplayAttackRange();
+        ActiveCharacter.DisplayAttackRange();
         attackButton.interactable = false; //on desactive les boutons sauf le cancel et le fait de pouvoir cliquer une tile
         moveButton.interactable = false;
         cancelButton.interactable = true;
@@ -60,16 +64,18 @@ public class BattleManager : MonoBehaviour
 
     public void CancelAction() //si on affiche le range, on le desaffiche et on permet au joueur de changer d'idee
     {
-        activeCharacter.AttackIsCancelled = true;
-        activeCharacter.WaitingForTargetConfirmation = false;
-        activeCharacter.RemoveSelectableTiles();
+        ActiveCharacter.AttackIsCancelled = true;
+        ActiveCharacter.WaitingForTargetConfirmation = false;
+        ActiveCharacter.RemoveSelectableTiles();
         DisplayingRange = false;
-        cancelButton.interactable = false;
+        //cancelButton.interactable = false;
         RefreshButtonsAndManageTurn(); //quand on cancel, on refresh les boutons a savoir lesquels peuvent etre clicked (ex : si on a deja move on le reactive pas)
-
+        actionPanel.ClearActionList();
+        actionPanel.gameObject.SetActive(false);
+        actionDescriptionPanel.SetActive(false);
         if (DisplayingRange)
         {
-            activeCharacter.RemoveSelectableTiles(); //on enleve la selection de tiles                      
+            ActiveCharacter.RemoveSelectableTiles(); //on enleve la selection de tiles                      
         }
     }
 
@@ -85,8 +91,10 @@ public class BattleManager : MonoBehaviour
 
     public void SkipTurn() //methode qui sert a changer le active character mais est aussi called si on click sur le bouton skip turn.
     {
+        actionPanel.gameObject.SetActive(false);
+        ActiveCharacter.GetComponent<BuffsSystem>().OnTurnChange();
         playerCharacterIndex = playerCharacterIndex < playerCharacters.Length - 1 ? playerCharacterIndex + 1 : 0; // si les deux actions sont faites (move + action), on passe au character suivant.
-        activeCharacter = playerCharacters[playerCharacterIndex];
+        ActiveCharacter = playerCharacters[playerCharacterIndex];
         DoneWithAttack = false; //on reset ses actions avant de refresh les boutons
         doneWithMovement = false;
         RefreshButtonsAndManageTurn();
@@ -94,6 +102,7 @@ public class BattleManager : MonoBehaviour
 
     public void ConfirmTargets()
     {
-        activeCharacter.WaitingForTargetConfirmation = false;
+        actionDescriptionPanel.SetActive(false);
+        ActiveCharacter.WaitingForTargetConfirmation = false;
     }
 }

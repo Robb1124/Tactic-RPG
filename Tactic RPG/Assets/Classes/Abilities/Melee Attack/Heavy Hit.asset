@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a2ea5e86dc462541b5868e92b5d04e6, type: 3}
+  m_Name: Heavy Hit
+  m_EditorClassIdentifier: 
+  abilityID: 1
+  abilityName: Heavy Hit
+  abilityDescription: You recklessly aim at your target's head. Does 70% base damage
+    but you stun your target for 3 turns. (-30% base damage)
+  attackConfig:
+    aimPattern: 0
+    targetPattern: 0
+    selfCastAllowed: 0
+    maxAttackRange: 1
+    minAttackRange: 1
+    maxAttackSize: 1
+    minAttackSize: 0
+    attackHeight: 1
+    bonusAttackDamage: 0
+    damageModifier: 0.7
+    isThereBuffs: 1
+    buffsToApply: 01000000
+    howToApplyBuffs: 00000000
+    buffsTurnDuration: 02000000
